@@ -655,7 +655,6 @@ struct cmdLineOpts {
    Int_t numFiles; // -f
    Int_t showProg; // -p
    Int_t quiet; // -q
-   Int_t spot; // -g
    Int_t viz; // -v 
    Int_t cost; // -c
    Int_t balance; // -b
@@ -673,7 +672,7 @@ Real_t CalcElemVolume( const Real_t x[8],
 
 // lulesh-util
 void RecordCaliperMetadata(const struct cmdLineOpts& opts);
-void EnableSpot();
+void RecordAdiakMetadata(const struct cmdLineOpts& opts);
 
 void ParseCommandLineOptions(int argc, char *argv[],
                              Int_t myRank, struct cmdLineOpts *opts);

@@ -10,11 +10,26 @@ find_package(Threads)
 include_directories(${caliper_INCLUDE_DIR})
 list(APPEND LULESH_EXTERNAL_LIBS caliper Threads::Threads)
 
+find_library(adiak_LIBRARIES
+  NAMES adiak
+  HINTS ${adiak_DIR}/lib)
+find_path(adiak_INCLUDE_DIRS
+  NAMES adiak.h
+  HINTS ${adiak_DIR}/include)
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(adiak DEFAULT_MSG
+  adiak_LIBRARIES
+  adiak_INCLUDE_DIRS)
+mark_as_advanced(adiak_LIBRARIES adiak_INCLUDE_DIRS)  
+
+list(APPEND LULESH_EXTERNAL_LIBS ${adiak_LIBRARIES})
+include_directories(${adiak_INCLUDE_DIRS})
+
 if (WITH_MPI)
   find_package(MPI REQUIRED)
-  include_directories(${MPI_C_INCLUDE_PATH} ${MPI_CXX_INCLUDE_PATH})
+  include_directories(${MPI_CXX_INCLUDE_PATH})
   add_definitions("-DUSE_MPI=1")
-  list(APPEND LULESH_EXTERNAL_LIBS ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES})
+  list(APPEND LULESH_EXTERNAL_LIBS ${MPI_CXX_LIBRARIES})
 else()
   add_definitions("-DUSE_MPI=0")
 endif()

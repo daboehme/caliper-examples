@@ -162,6 +162,8 @@ Additional BSD Notice
 
 #include <caliper/cali-manager.h>
 
+#include <adiak.hpp>
+
 #include "lulesh.h"
 
 /*********************************/
@@ -2749,6 +2751,8 @@ int main(int argc, char *argv[])
    cali_config_preset("CALI_LOG_VERBOSITY", "0");
    cali_config_preset("CALI_CALIPER_ATTRIBUTE_DEFAULT_SCOPE", "process");
 
+   void* lulesh_adiak_comm_p = nullptr;
+
 #if USE_MPI
    Domain_member fieldData ;
 
@@ -2756,11 +2760,17 @@ int main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD, &numRanks) ;
    MPI_Comm_rank(MPI_COMM_WORLD, &myRank) ;
 
+   MPI_Comm lulesh_adiak_comm;
+   MPI_Comm_dup(MPI_COMM_WORLD, &lulesh_adiak_comm);
+   lulesh_adiak_comm_p = &lulesh_adiak_comm;
+
    cali_mpi_init();
 #else
    numRanks = 1;
    myRank = 0;
 #endif
+
+   adiak::init(lulesh_adiak_comm_p);
 
    /* Set defaults that can be overridden by command line opts */
    opts.its = 9999999;
@@ -2772,10 +2782,9 @@ int main(int argc, char *argv[])
    opts.viz = 0;
    opts.balance = 1;
    opts.cost = 1;
-   opts.spot = 0;
    opts.calicfg = "";
 
-   ParseCommandLineOptions(argc, argv, myRank, &opts);
+   ParseCommandLineOptions(argc, argv, myRank, &opts);   
 
    if ((myRank == 0) && (opts.quiet == 0)) {
       printf("Running problem size %d^3 per domain until completion\n", opts.nx);
@@ -2791,10 +2800,6 @@ int main(int argc, char *argv[])
       printf("To print out progress, use -p\n");
       printf("To write an output file for VisIt, use -v\n");
       printf("See help (-h) for more options\n\n");
-   }
-
-   if (opts.spot) {
-       EnableSpot();
    }
 
    // Enable Caliper configurations given in -P
@@ -2816,7 +2821,8 @@ int main(int argc, char *argv[])
       c->start();
 
    RecordCaliperMetadata(opts);
-
+   RecordAdiakMetadata(opts);
+   
    CALI_MARK_FUNCTION_BEGIN;
 
    // Set up the mesh and decompose. Assumes regular cubes for now
@@ -2900,6 +2906,8 @@ int main(int argc, char *argv[])
    // Flush Caliper channels
    for (auto &c : caliper_channels)
       c->flush();
+
+   adiak::fini();
 
 #if USE_MPI
    MPI_Finalize() ;
